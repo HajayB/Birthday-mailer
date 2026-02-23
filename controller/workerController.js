@@ -1,13 +1,6 @@
-require('dotenv').config();
-const connectDB = require("./config/db"); 
-//connect mongoDB
-connectDB();
+const { sendBirthdayMail } = require('../config/mail');
+const User = require('../model/userModel');
 const cron = require('node-cron');
-const { sendBirthdayMail } = require('./config/mail');
-const User = require('./model/userModel');
-
- 
-
 // get today's date, month and day
 const getTodayMD = () => {
     const today = new Date();
@@ -15,13 +8,13 @@ const getTodayMD = () => {
 };
  
 //function to send email 
-const runBirthdayEmails = async () => {
+exports.runBirthdayEmails = async (req,res) => {
+  console.log('Worker is running...');
     console.log('Checking birthdays in DB...');
     const { month: todayMonth, day: todayDay, year: currentYear } = getTodayMD();
   
     // Query users whose birthday is today AND who haven't been sent an email this year
-    const users = await User.find({});
-    console.log(users);
+    // const users = await User.find({});
     const birthdayUsers = await User.find({
       dob: {
         $exists: true
@@ -39,7 +32,8 @@ const runBirthdayEmails = async () => {
     });
   
     if (birthdayUsers.length === 0) {
-      console.log('No birthdays to send today.');
+      res.status(200).json({message:"No birthday mails to send today"})
+      console.log('No birthday mails to send today');
       return;
     }
   
@@ -51,6 +45,7 @@ const runBirthdayEmails = async () => {
         await user.save();
       }
     }
+    res.status(200).json({message:"Worker done... emails sent for the day"})
     console.log('Birthday emails job finished.');
 };
 
@@ -59,5 +54,3 @@ const runBirthdayEmails = async () => {
 cron.schedule('0 6 * * *', () => { //deployment on render will push it to 7 because they use UTC timezone 
     runBirthdayEmails().catch(err => console.error(err));
 });
-  
-console.log('Birthday email worker started. Waiting for scheduled time...');

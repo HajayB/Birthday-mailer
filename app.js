@@ -7,9 +7,10 @@ const express = require("express");
 const app = express();
 
 const userRoutes = require("./routes/userRoutes");
+const workerRoute = require("./routes/workerRoute");
 
 const connectDB = require("./config/db"); //connect mongoDB
-connectDB();
+
 
 const fs = require("fs");
 const path = require("path");
@@ -23,6 +24,7 @@ express.urlencoded({ extended: true })
 
 //Routes 
 app.use("/api/", userRoutes);
+app.use("/api/", workerRoute);
 
 //serve html 
 app.use(express.static(path.join(__dirname, "public")))
